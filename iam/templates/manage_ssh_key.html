@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block body %}
+<div><a href="{{ url_for('get_homepage') }}">(- back)</a></div>
+<h2>Manage SSH Authorized Keys <small>for {{ username }}</small></h2>
+<div>
+If you don't have ssh-key, you can use <strong><code>ssh-keygen</code></strong> to generate one.<br>
+You can see your ssh-key using <strong><code>cat ~/.ssh/id_rsa.pub</code></strong>, then copy and paste to here.<br>
+One ssh-key per line.
+</div>
+<form action="{{ url_for('post_manage_ssh_key', username=username) }}" method="post">
+    <div>
+        <textarea name="keys" cols="80" rows="10"
+        placeholder="ssh-rsa AAAA... {{ username }}@hostname&#10;one per line">{{ keys }}</textarea>
+    </div>
+    <div>
+        <label for="password">Password</label>
+        <input type="password" name="password">
+        <input type="submit" value="Apply">
+    </div>
+</form>
+{% endblock %}

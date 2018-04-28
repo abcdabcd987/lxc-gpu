@@ -1,0 +1,31 @@
+# Distribution configuration
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.include = /usr/share/lxc/config/ubuntu.userns.conf
+lxc.arch = x86_64
+
+# Container specific configuration
+lxc.include = /etc/lxc/default.conf
+lxc.rootfs.backend = dir
+lxc.mount.entry = /SSD SSD none bind,create=dir
+lxc.mount.entry = /NAS/Share NAS/Share none bind,create=dir
+lxc.mount.entry = /NAS/Dataset NAS/Dataset none bind,create=dir
+lxc.mount.entry = /NAS/Workspaces NAS/Workspaces none bind,create=dir
+
+lxc.mount.entry = /newNAS/Share newNAS/Share none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/DMGroup newNAS/Workspaces/DMGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/CVGroup newNAS/Workspaces/CVGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/UCGroup newNAS/Workspaces/UCGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/MLGroup newNAS/Workspaces/MLGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/DRLGroup newNAS/Workspaces/DRLGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/AdsGroup newNAS/Workspaces/AdsGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/NLPGroup newNAS/Workspaces/NLPGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Workspaces/CrowdsourcingGroup newNAS/Workspaces/CrowdsourcingGroup none bind,create=dir
+
+lxc.mount.entry = /newNAS/Datasets/DMGroup newNAS/Datasets/DMGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Datasets/CVGroup newNAS/Datasets/CVGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Datasets/UCGroup newNAS/Datasets/UCGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Datasets/MLGroup newNAS/Datasets/MLGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Datasets/DRLGroup newNAS/Datasets/DRLGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Datasets/AdsGroup newNAS/Datasets/AdsGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Datasets/NLPGroup newNAS/Datasets/NLPGroup none bind,create=dir
+lxc.mount.entry = /newNAS/Datasets/CrowdsourcingGroup newNAS/Datasets/CrowdsourcingGroup none bind,create=dir

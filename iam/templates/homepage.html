@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block body %}
+<h1>GPU Server Identity &amp; Access Management</h1>
+
+<h2>Manage SSH Authorized Keys</h2>
+<form action="{{ url_for('get_manage_ssh_key_redirect') }}" method="post">
+    <label>Username</label>
+    <input type="text" name="username" autocomplete="off">
+    <input type="submit" value="Manage">
+</form>
+
+<h2>Registered User List <small><a href="{{ url_for('get_users_list') }}">(or here)</a></small></h2>
+<table>
+    <thead>
+        <tr>
+            <th>username</th>
+            <th>name</th>
+            <th>port</th>
+            <th>subuid</th>
+            <th>manage</th>
+            <th>get</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users -%}
+        <tr>
+            <td>{{ user['username'] }}</td>
+            <td>{{ user['name'] }}</td>
+            <td>{{ user['port'] }}</td>
+            <td>{{ user['subuid'] }}</td>
+            <td>
+                <a href="{{ url_for('get_manage_ssh_key', username=user['username']) }}">(manage ssh key)</a>
+            </td>
+            <td>
+                <a href="{{ url_for('get_name', username=user['username']) }}">(name)</a>
+                <a href="{{ url_for('get_port', username=user['username']) }}">(port)</a>
+                <a href="{{ url_for('get_subuid', username=user['username']) }}">(subuid)</a>
+                <a href="{{ url_for('get_ssh_key', username=user['username']) }}">(.ssh/authorized_keys)</a>
+                <a href="{{ url_for('get_ssh_config', username=user['username']) }}">(.ssh/config)</a>
+            </td>
+        </tr>
+        {%- endfor %}
+    </tbody>
+</table>
+
+<h2>(Admin Only) Send SSH Keys to All Servers <small><a href="{{ url_for('get_copy_ssh_key_log') }}">(see log)</a></small></h2>
+<form action="{{ url_for('post_send_all_keys') }}" method="post">
+    <label>Username</label><input type="text" name="username" autocomplete="off">
+    <label>Password</label><input type="password" name="password" autocomplete="off">
+    <input type="submit" value="Send All">
+</form>
+{% endblock %}
