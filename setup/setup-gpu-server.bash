@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+set -xe
 # export APT_SOURCE='ftp.sjtu.edu.cn'
 # export SCRIPTS='/newNAS/Share/GPU_Server'
 # export NVIDIA_DRIVER_INSTALLER="$SCRIPTS/NVIDIA-Linux-x86_64-390.48.run"
@@ -56,13 +58,13 @@ sudo mount -a
 sudo apt-get install -y build-essential linux-headers-$(uname -r) htop tmux lxc ntp wget grep awk sed curl
 
 # Install NVIDIA Drivers
-sudo "$NVIDIA_DRIVER_INSTALLER" --silent
+sudo sh "$NVIDIA_DRIVER_INSTALLER" --silent
 
 # Check nvidia-smi
 nvidia-smi
 
 # Fix `nvidia-uvm`
-sudo wget -O /root/start-nvidia.bash https://raw.githubusercontent.com/abcdabcd987/lxc-gpu/master/start-nvidia.bash
+sudo wget -O /root/start-nvidia.bash https://raw.githubusercontent.com/abcdabcd987/lxc-gpu/master/scripts/start-nvidia.bash
 cat <<EOM | sudo tee /etc/rc.local
 #!/bin/sh -e
 /root/start-nvidia.bash
@@ -105,3 +107,5 @@ sudo cp "$IAM_SHELL_BASH" /home/iam/iam-shell.bash
 sudo cp "$SET_AUTHORIZED_KEYS_PY" /home/iam/set_authorized_keys.py
 sudo chmod +x /home/iam/iam-shell.bash /home/iam/set_authorized_keys.py
 sudo chown -R iam:iam /home/iam
+
+printf "\e[96;1mDone!\e[0m\n"

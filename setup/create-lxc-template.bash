@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+set -xe
 # export APT_SOURCE='ftp.sjtu.edu.cn'
 # export NVIDIA_DRIVER_INSTALLER='./NVIDIA-Linux-x86_64-390.48.run'
 
@@ -31,6 +33,16 @@ done
 # Start the container
 chmod a+x ~/.local
 lxc-start -n template -d
+set +xe
+while true; do
+    lxc-info -n template 2>/dev/null | grep 'IP:' >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        set -xe
+        break
+    else
+        sleep 0.1
+    fi
+done
 
 # `sudo` without password
 lxc-attach -n template -- chmod +w /etc/sudoers
@@ -61,3 +73,4 @@ lxc-stop -n template
 
 # Save the rootfs
 sudo tar --numeric-owner -C ~/.local/share/lxc/template/ -czpf template.tar.gz rootfs
+printf "\e[96;1mThe template has been saved to template.tar.gz\e[0m\n"
