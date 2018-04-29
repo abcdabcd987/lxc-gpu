@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block body %}
+<h1>GPU Server Status</h1>
+<table>
+    <thead>
+        <tr>
+            <th scope="col">Server</th>
+            <th scope="col">CPU</th>
+            <th scope="col">Memory</th>
+            <th scope="col">GPU</th>
+            <th scope="col">FS</th>
+            <th scope="col">IO</th>
+            <th scope="col">Users</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for server_name, server in servers.items() -%}
+        <tr>
+            <th scope="row">{{ server_name }}</th>
+            <td>{{ server.cpu_cores }}T, {{ server.cpu_usage }}%, {{ server.cpu_temp }}°C</td>
+            <td>{{ server.mem_free }}G/{{ server.mem_total }}G Free</td>
+            <td>
+                <ul>
+                    {% for gpu in server.gpus -%}
+                    <li>[{{ loop.index0 }}]{{ gpu.name }}, {{ gpu.util }}%, {{ gpu.temp }}°C, {{ '{:.2f}'.format(gpu.mem_free) }}G/{{ '{:.2f}'.format(gpu.mem_total) }}G Free</li>
+                    {%- endfor %}
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    {% for mount_name, m in server.mounts.items() -%}
+                    <li>{{ mount_name }}({{ m.dev }}): {{ m.free }}/{{ m.size }}={{ 100-m.usage }}% Free</li>
+                    {%- endfor %}
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    {% for name, io in server.io.items() -%}
+                    <li>{{ name }}: R{{ '{:.2f}'.format(io.read) }} W{{ '{:.2f}'.format(io.write) }} MBps {{ io.util }}%</li>
+                    {%- endfor %}
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    {% for username, u in server.users.items() if u.cpu > 5 or u.rss > 1 or u.gpu_mem > 0.1 -%}
+                    <li>{{ iam.get_name(username) or username }}: {{ '{:.0f}'.format(u.cpu) }}%, {{ '{:.2f}'.format(u.rss) }}G, {{ '{:.2f}'.format(u.gpu_mem) }}G</li>
+                    {%- endfor %}
+                </ul>
+            </td>
+        </tr>
+        {%- endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

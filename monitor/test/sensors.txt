@@ -1,0 +1,47 @@
+i350bb-pci-8100
+Adapter: PCI adapter
+loc1:         +46.0°C  (high = +120.0°C, crit = +110.0°C)
+
+power_meter-acpi-0
+Adapter: ACPI interface
+power1:      624.00 W  (interval =   1.00 s)
+
+coretemp-isa-0000
+Adapter: ISA adapter
+Physical id 0:  +36.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 0:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 1:         +33.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 2:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 3:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 4:         +33.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 5:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 6:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 7:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 8:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 9:         +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 10:        +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 11:        +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 12:        +31.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 13:        +31.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 14:        +32.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 15:        +32.0°C  (high = +92.0°C, crit = +102.0°C)
+
+coretemp-isa-0001
+Adapter: ISA adapter
+Physical id 1:  +41.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 0:         +35.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 1:         +37.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 2:         +34.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 3:         +37.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 4:         +37.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 5:         +35.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 6:         +38.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 7:         +37.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 8:         +35.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 9:         +35.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 10:        +36.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 11:        +36.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 12:        +33.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 13:        +36.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 14:        +34.0°C  (high = +92.0°C, crit = +102.0°C)
+Core 15:        +34.0°C  (high = +92.0°C, crit = +102.0°C)
