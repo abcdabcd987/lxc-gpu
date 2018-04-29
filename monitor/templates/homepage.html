@@ -1,55 +1,138 @@
-{% extends "layout.html" %}
-{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="5">
+  <title>GPU Server Status</title>
+  <style type="text/css">
+    *, th, td { font-family: monospace; font-size: 9px; }
+    table { border-collapse: collapse; overflow-x: scroll; }
+    table, th, td { border: 1px solid black; }
+    .no-border-right { border-right: none; }
+    .no-border-left { border-left: none; }
+    ul { list-style: none; margin: 0; padding: 0; }
+    li { padding: 0; margin: 0; }
+    .progress-bar { display: inline-block; background-color: lightgray; position: relative; z-index: 0; text-align: center; }
+    .progress-color { position: absolute; left: 0; top: 0; bottom: 0; z-index: -5; }
+    .progress-text { z-index: 0; }
+  </style>
+</head>
+<body>
+{% if warnings -%}
+<strong>WARNING</strong>
+<ul>
+  {% for w in warnings -%}
+  <li>{{w}}</li>
+  {%- endfor %}
+</ul>
+{%- endif %}
 <h1>GPU Server Status</h1>
 <table>
-    <thead>
-        <tr>
-            <th scope="col">Server</th>
-            <th scope="col">CPU</th>
-            <th scope="col">Memory</th>
-            <th scope="col">GPU</th>
-            <th scope="col">FS</th>
-            <th scope="col">IO</th>
-            <th scope="col">Users</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for server_name, server in servers.items() -%}
-        <tr>
-            <th scope="row">{{ server_name }}</th>
-            <td>{{ server.cpu_cores }}T, {{ server.cpu_usage }}%, {{ server.cpu_temp }}°C</td>
-            <td>{{ server.mem_free }}G/{{ server.mem_total }}G Free</td>
-            <td>
-                <ul>
-                    {% for gpu in server.gpus -%}
-                    <li>[{{ loop.index0 }}]{{ gpu.name }}, {{ gpu.util }}%, {{ gpu.temp }}°C, {{ '{:.2f}'.format(gpu.mem_free) }}G/{{ '{:.2f}'.format(gpu.mem_total) }}G Free</li>
-                    {%- endfor %}
-                </ul>
-            </td>
-            <td>
-                <ul>
-                    {% for mount_name, m in server.mounts.items() -%}
-                    <li>{{ mount_name }}({{ m.dev }}): {{ m.free }}/{{ m.size }}={{ 100-m.usage }}% Free</li>
-                    {%- endfor %}
-                </ul>
-            </td>
-            <td>
-                <ul>
-                    {% for name, io in server.io.items() -%}
-                    <li>{{ name }}: R{{ '{:.2f}'.format(io.read) }} W{{ '{:.2f}'.format(io.write) }} MBps {{ io.util }}%</li>
-                    {%- endfor %}
-                </ul>
-            </td>
-            <td>
-                <ul>
-                    {% for username, u in server.users.items() if u.cpu > 5 or u.rss > 1 or u.gpu_mem > 0.1 -%}
-                    <li>{{ iam.get_name(username) or username }}: {{ '{:.0f}'.format(u.cpu) }}%, {{ '{:.2f}'.format(u.rss) }}G, {{ '{:.2f}'.format(u.gpu_mem) }}G</li>
-                    {%- endfor %}
-                </ul>
-            </td>
-        </tr>
-        {%- endfor %}
-    </tbody>
+  <thead>
+    <tr>
+      <th scope="col">Server</th>
+      <th scope="col">CPU</th>
+      <th scope="col">Memory</th>
+      <th scope="col" colspan="2">GPU</th>
+      <th scope="col" colspan="2">FS</th>
+      <th scope="col">IO</th>
+      <th scope="col">Users(CPU,MEM,GPU-MEM)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for server_name in server_names -%}
+    {%- set server = servers[server_name] -%}
+    <tr>
+      <th scope="row">
+        <ul>
+          <li>{{ server_name }}</li>
+          <li>{{ remarks[server_name] }}</li>
+        </ul>
+      </th>
+      <td>
+        <ul>
+          <li>
+            <span class="progress-bar" style="width: 56px;">
+              <span class="progress-color" style="background-color: #61A513; width: {{ server.cpu_usage }}%;"></span>
+              <span class="progress-text">{{ server.cpu_usage }}%</span>
+            </span>
+          </li>
+          <li>{{ server.cpu_cores }}T, {{ server.cpu_temp }}°C</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>
+            <span class="progress-bar" style="width: 96px;">
+              <span class="progress-color" style="background-color: #46A4FC; width: {{ server.mem_used / server.mem_total * 100 }}%;"></span>
+              <span class="progress-text">{{ '{:.2f}'.format(server.mem_used) }}G/{{ '{:.2f}'.format(server.mem_total) }}G</span>
+            </span>
+          </li>
+          <li>{{ '{:.2f}'.format(server.mem_free) }}G Free</li>
+        </ul>
+      </td>
+      <td class="no-border-right">
+        <ul>
+          {% for gpu in server.gpus -%}
+          <li>
+            [{{ loop.index0 }}]{{ gpu.name }}, {{ gpu.temp }}°C
+          </li>
+          {%- endfor %}
+        </ul>
+      </td>
+      <td class="no-border-left">
+        <ul>
+          {% for gpu in server.gpus -%}
+          <li>
+            <span class="progress-bar" style="width: 56px;">
+              <span class="progress-color" style="background-color: #f7756e; width: {{ gpu.util }}%;"></span>
+              <span class="progress-text">{{ gpu.util }}%</span>
+            </span>
+            <span class="progress-bar" style="width: 72px;">
+              <span class="progress-color" style="background-color: #f7dd69; width: {{ gpu.mem_used / gpu.mem_total * 100 }}%;"></span>
+              <span class="progress-text">{{ '{:.2f}'.format(gpu.mem_free) }}G Free</span>
+            </span>
+          </li>
+          {%- endfor %}
+        </ul>
+      </td>
+      <td class="no-border-right">
+        <ul>
+          {% for mount_name, m in server.mounts.items() -%}
+          <li>{{ mount_name }}</li>
+          {%- endfor %}
+        </ul>
+      </td>
+      <td class="no-border-left">
+        <ul>
+          {% for mount_name, m in server.mounts.items() -%}
+          <li>
+            <span class="progress-bar" style="width: 112px;">
+              <span class="progress-color" style="background-color: #7E78E8; width: {{ m.usage }}%;"></span>
+              <span class="progress-text">{{ m.free }}/{{ m.size }}={{ 100-m.usage }}% Free</span>
+            </span>
+          </li>
+          {%- endfor %}
+        </ul>
+      </td>
+      <td>
+        <ul>
+          {% for name, io in server.io.items() -%}
+          <li>{{ name }}: R{{ '{:.2f}'.format(io.read) }} W{{ '{:.2f}'.format(io.write) }} MBps {{ io.util }}%</li>
+          {%- endfor %}
+        </ul>
+      </td>
+      <td>
+        <ul>
+          {% for username, u in server.users.items() if u.cpu > 5 or u.rss > 5 or u.gpu_mem > 0.1 -%}
+          <li>{{ '{:14s}'.format(iam.get_name(username) or username) | nbsp | safe }} {{ '{:>4.0f}'.format(u.cpu) | nbsp | safe }}% {{ '{:>5.2f}'.format(u.rss) | nbsp | safe }}G {{ '{:>5.2f}'.format(u.gpu_mem) | nbsp | safe }}G</li>
+          {%- endfor %}
+        </ul>
+      </td>
+    </tr>
+    {%- endfor %}
+  </tbody>
 </table>
+</body>
+</html>
 
-{% endblock %}

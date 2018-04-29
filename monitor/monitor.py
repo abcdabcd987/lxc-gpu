@@ -4,6 +4,7 @@ import os
 import re
 import requests
 import time
+from natsort import natsorted
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, render_template, abort, Response, g, make_response, jsonify
 from gevent.wsgi import WSGIServer
@@ -45,13 +46,14 @@ class IAMUsers:
 class Server:
     def __init__(self, iam):
         self._iam = iam
-        self.last_update = None
+        self.last_updated = None
         self.mounts = {}
         self.users = {}
         self.io = {}
+        self._gpu_processes = {}
 
     def _mark_updated(self):
-        self.last_update = time.time()
+        self.last_updated = time.time()
 
     def feed_mpstat(self, text):
         idle = None
@@ -101,6 +103,8 @@ class Server:
         lines = text.splitlines()
         header_line = next(i for i, line in enumerate(lines) if line.startswith('Device:'))
         for line in lines[header_line+1:]:
+            if not line:
+                continue
             dev, rrqms, wrqms, rs, ws, rkbs, wkbs, avgrqsz, avgqusz, await_, r_await, w_await, svctm, util = map(str.strip, line.split())
             for d in self.mounts.values():
                 if dev in d['dev']:
@@ -158,7 +162,7 @@ class Server:
                 u = users[username]
                 u['cpu'] += float(cpu)
                 u['rss'] += float(rss) / 1024. / 1024.
-                u['gpu_mem'] += self._gpu_processes.get(pid, 0) / 1024.
+                u['gpu_mem'] += self._gpu_processes.get(int(pid), 0) / 1024.
         self.users = users
         self._mark_updated()
         return True
@@ -166,13 +170,20 @@ class Server:
     def feed_free(self, text):
         mem_line = text.splitlines()[1]
         total, used, free, shared, buff, avail = map(int, mem_line.split()[1:])
-        self.mem_total = int(total / 1024. / 1024.)
-        self.mem_free = int((total - used) / 1024. / 1024.)
+        self.mem_used = used / 1024. / 1024.
+        self.mem_total = total / 1024. / 1024.
+        self.mem_free = (total - used) / 1024. / 1024.
         self._mark_updated()
         return True
 
 
+def nbsp(x):
+    return x.replace(' ', '&nbsp;')
+
+
 app = Flask(__name__)
+app.jinja_env.filters['nbsp'] = nbsp
+app.jinja_env.globals.update(max=max)
 iam = IAMUsers()
 servers = {}
 server_names = []
@@ -184,7 +195,7 @@ def post_feed(server, program):
     iam.update()
     if server not in servers:
         servers[server] = Server(iam)
-        server_names = sorted(servers.keys())
+        server_names = natsorted(servers.keys())
     s = servers[server]
     func = getattr(s, 'feed_' + program, None)
     status = 'invalid feed: {}'.format(program)
@@ -198,17 +209,24 @@ def post_feed(server, program):
 def get_homepage():
     iam.update()
     last_updated = getattr(g, 'last_updated', 0)
-    if time.time() - last_updated > 5:
-        g.rendered = render_template('homepage.html', servers=servers, iam=iam)
-        g.last_updated = time.time()
+    now = time.time()
+    if now - last_updated > 3:
+        g.last_updated = now
+        warnings = []
+        for server_name in server_names:
+            server = servers[server_name]
+            diff = now - server.last_updated
+            if diff > 30:
+                warnings.append("Server [{}] hasn't updated yet for more than {:.0f} seconds.".format(server_name, diff))
+        g.rendered = render_template('homepage.html', servers=servers, server_names=server_names, iam=iam, warnings=warnings, remarks=settings.REMARKS)
     return g.rendered
 
 
 if __name__ == '__main__':
-    app.run('0.0.0.0', port=settings.WEB_PORT, debug=True)
-    # http_server = WSGIServer(('', settings.WEB_PORT), app)
-    # try:
-    #     print('WSGIServer start')
-    #     http_server.serve_forever()
-    # except KeyboardInterrupt:
-    #     print('WSGIServer stopped')
+    # app.run('0.0.0.0', port=settings.WEB_PORT, debug=True)
+    http_server = WSGIServer(('', settings.WEB_PORT), app)
+    try:
+        print('WSGIServer start')
+        http_server.serve_forever()
+    except KeyboardInterrupt:
+        print('WSGIServer stopped')
