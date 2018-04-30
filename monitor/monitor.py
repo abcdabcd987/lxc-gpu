@@ -4,6 +4,9 @@ import os
 import re
 import requests
 import time
+import socket
+import struct
+import ipaddress
 from natsort import natsorted
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, render_template, abort, Response, g, make_response, jsonify
@@ -191,6 +194,20 @@ server_names = []
 
 @app.route('/feed/<server>/<program>', methods=['POST'])
 def post_feed(server, program):
+    ip = request.environ.get('HTTP_X_FORWARDED_FOR')
+    if ip is None:
+        ip = request.environ['REMOTE_ADDR']
+    ip = ipaddress.ip_address(ip)
+    ipv4 = ip.ipv4_mapped if ip.version == 6 else None
+    ok = False
+    for subnet in settings.FEED_ALLOWED_IP:
+        network = ipaddress.ip_network(subnet)
+        if ip in network or (ipv4 is not None and ipv4 in network):
+            ok = True
+            break
+    if not ok:
+        abort(403)
+
     global server_names
     iam.update()
     if server not in servers:

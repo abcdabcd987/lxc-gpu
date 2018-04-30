@@ -1,5 +1,8 @@
 WEB_PORT = 4838
 IAM_URL = 'http://iam.apexlab.org'
+FEED_ALLOWED_IP = [
+    '172.16.2.0/24',
+]
 REMARKS = {
     'gpu2': 'CV',
     'gpu3': 'Public',
