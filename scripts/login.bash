@@ -1,9 +1,11 @@
 #!/bin/bash
-IP=$(ifconfig eno1 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
 IAM_HOST="iam.apexlab.org"
+SNAPSHOT_PATH="/NAS/Workspaces/lxc-snapshot"
+NVIDIA_DRIVER_INSTALLER_DIR="/newNAS/Share/GPU_Server"
+IFACE=$(route | grep default | awk '{print $8}')
+IP=$(ifconfig $IFACE | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
 PORT=$(curl -s -f http://$IAM_HOST/user/$USER/port)
 INFO=$(lxc-info -n $USER)
-SNAPSHOT_PATH="/NAS/Workspaces/lxc-snapshot"
 
 function print_help {
     echo "========== Tips:"
@@ -32,6 +34,7 @@ function do_stop {
 function do_start {
     echo "$INFO" | grep RUNNING > /dev/null 2>&1
     if [ $? -ne 0 ]; then
+        # start the container
         echo "========== It seems that your container is not running"
         echo "========== Starting your container..."
         lxc-start -n $USER -d
@@ -39,14 +42,47 @@ function do_start {
            echo "========== Fail. Please contact administrators"
            exit 1
         fi
-        sleep 5
-        LXCIP=$(lxc-info -n $USER | grep 'IP:' | grep -Eo '[0-9].+')
-        if [[ -z "$LXCIP" ]]; then
-            lxc-stop -n $USER
-            echo "Failed to get your container IP."
-            echo "If this problem cannot be solved by retrying, please contact administrators."
-            exit 1
+
+        # wait until the container is up
+        while true; do
+            LXCIP=$(lxc-info -n $USER | grep 'IP:' | grep -Eo '[0-9].+')
+            if [[ -z "$LXCIP" ]]; then
+                sleep 0.1
+            else
+                break
+            fi
+        done
+        echo "========== The container is up"
+
+        # check if the nvidia driver matches the host's
+        LXCROOT=/home/$USER/.local/share/lxc/$USER/rootfs
+        HOST_DRIVER=$(readlink /usr/lib/x86_64-linux-gnu/libcuda.so.1 | sed 's/libcuda.so.//')
+        LXC_DRIVER=$(readlink $LXCROOT/usr/lib/x86_64-linux-gnu/libcuda.so.1 | sed 's/libcuda.so.//')
+        if [[ "$HOST_DRIVER" != "$LXC_DRIVER" ]]; then
+            printf "NVIDIA driver version mismatch! Host=\e[96;1m$HOST_DRIVER\e[0m Yours=\e[96;1m$LXC_DRIVER\e[0m\n"
+            INSTALLER="$NVIDIA_DRIVER_INSTALLER_DIR/NVIDIA-Linux-x86_64-$HOST_DRIVER.run"
+            if [ ! -f "$INSTALLER" ]; then
+                printf "Failed to find the installer at \e[96;1m$INSTALLER\e[0m"
+                echo "You might need to manually install the driver"
+            else
+                printf "Installing the driver from \e[96;1m$INSTALLER\e[0m\n"
+                sudo cp "$INSTALLER" $LXCROOT/nvidia-driver-installer.run
+                sudo chown --reference $LXCROOT/bin/bash $LXCROOT/nvidia-driver-installer.run
+                lxc-attach -n $USER -- sh /nvidia-driver-installer.run --no-kernel-module --silent
+                sudo rm $LXCROOT/nvidia-driver-installer.run
+                echo "Done! Trying nvidia-smi:"
+                lxc-attach -n $USER -- nvidia-smi
+                LXC_DRIVER=$(readlink $LXCROOT/usr/lib/x86_64-linux-gnu/libcuda.so.1 | sed 's/libcuda.so.//')
+                if [[ "$HOST_DRIVER" != "$LXC_DRIVER" ]]; then
+                    printf "NVIDIA driver version still mismatch! Host=\e[96;1m$HOST_DRIVER\e[0m Yours=\e[96;1m$LXC_DRIVER\e[0m\n"
+                    echo "You might need to manually install the driver"
+                else
+                    printf "Successfully installed NVIDIA driver. Host=\e[96;1m$HOST_DRIVER\e[0m=Yours=\e[96;1m$LXC_DRIVER\e[0m\n"
+                fi
+            fi
         fi
+
+        # forward ssh port
         sudo iptables -t nat -A PREROUTING -p tcp --dport $PORT -j DNAT --to-destination $LXCIP:22
         sudo iptables -t nat -A POSTROUTING -p tcp -d $LXCIP --dport 22 -j MASQUERADE
         lxc-info -n $USER
