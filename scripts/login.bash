@@ -2,6 +2,8 @@
 IAM_HOST="iam.apexlab.org"
 SNAPSHOT_PATH="/NAS/Workspaces/lxc-snapshot"
 NVIDIA_DRIVER_INSTALLER_DIR="/newNAS/Share/GPU_Server"
+PORTMAP_START=11000
+PORTMAP_END=12000
 IFACE=$(route | grep default | awk '{print $8}')
 IP=$(ifconfig $IFACE | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
 PORT=$(curl -s -f http://$IAM_HOST/user/$USER/port)
@@ -9,15 +11,16 @@ INFO=$(lxc-info -n $USER)
 
 function print_help {
     echo "========== Tips:"
-    printf "Start your container: \e[96;1mssh $USER@$IP\e[0m\n"
-    printf "Login your container: \e[96;1mssh $USER@$IP -p$PORT\e[0m\n"
-    printf "Manually stop your container: \e[96;1mssh $USER@$IP stop\e[0m\n"
-    printf "Take a snapshot: \e[96;1mssh $USER@$IP snapshot\e[0m\n"
+    printf "Start your container:  \e[96;1mssh $USER@$IP\e[0m\n"
+    printf "Login your container:  \e[96;1mssh $USER@$IP -p$PORT\e[0m\n"
+    printf "Stop your container:   \e[96;1mssh $USER@$IP stop\e[0m\n"
+    printf "Take a snapshot:       \e[96;1mssh $USER@$IP snapshot\e[0m\n"
     printf "Recover from snapshot: \e[96;1mssh $USER@$IP recover\e[0m\n"
     printf "Rebuild from template: \e[96;1mssh $USER@$IP rebuild\e[0m\n"
+    printf "Port forward:          \e[96;1mssh $USER@$IP port\e[0m\n"
     printf "Use \e[96;1mscp\e[0m or \e[96;1mSFTP\e[0m to transfer data to your container\n"
     printf "SSD mounted at \e[96;1m/SSD\e[0m\n"
-    printf "NAS mounted at \e[96;1m/NAS\e[0m\n"
+    printf "NAS mounted at \e[96;1m/newNAS\e[0m\n"
     printf "See GPU load: \e[96;1mnvidia-smi\e[0m\n"
     printf "More detailed guide: \e[96;1;4mhttp://apex.sjtu.edu.cn/guides/50\e[0m\n"
 }
@@ -25,8 +28,15 @@ function print_help {
 function do_stop {
     echo "========== Stopping your container..."
     LXCIP=$(lxc-info -n $USER | grep 'IP:' | grep -Eo '[0-9].+')
-    sudo iptables -t nat -D PREROUTING -p tcp --dport $PORT -j DNAT --to-destination $LXCIP:22
-    sudo iptables -t nat -D POSTROUTING -p tcp -d $LXCIP --dport 22 -j MASQUERADE
+    PORTMAPS=$(sudo iptables -t nat -L PREROUTING | grep -Po "dpt:\d+ to:$LXCIP:\d+" | sed -e 's/dpt://' -e "s/to:$LXCIP://" | awk '{ print $1"=>"$2 }')
+    for portmap in $PORTMAPS; do
+        ARRAY=($(echo $portmap | tr '=>' '\n'))
+        HOST_PORT=${ARRAY[0]}
+        CONTAINER_PORT=${ARRAY[1]}
+        echo "Unmapping port $IP:$HOST_PORT => container:$CONTAINER_PORT..."
+        sudo iptables -t nat -D PREROUTING -p tcp --dport $HOST_PORT -j DNAT --to-destination $LXCIP:$CONTAINER_PORT
+        sudo iptables -t nat -D POSTROUTING -p tcp -d $LXCIP --dport $CONTAINER_PORT -j MASQUERADE
+    done
     lxc-stop -n $USER
     lxc-info -n $USER
 }
@@ -203,6 +213,43 @@ function do_rebuild {
     printf "Confirm recover: \e[96;1mssh $USER@$IP recover $TOKEN $FROM\e[0m\n"
 }
 
+function do_port {
+    LXCIP=$(echo "$INFO" | grep 'IP:' | grep -Eo '[0-9].+')
+    if [[ -z "$LXCIP" ]]; then
+        echo "========== It seems that your container is down"
+        echo "========== You need to start your container first"
+        printf "Start your container: \e[96;1mssh $USER@$IP\e[0m\n"
+        return
+    fi
+    CONTAINER_PORT="$1"
+    if [[ ! -z "$CONTAINER_PORT" ]]; then
+        if [[ "$CONTAINER_PORT" =~ ^[0-9]+$ && 1 -le "$CONTAINER_PORT" && "$CONTAINER_PORT" -le 65536 ]]; then
+            HOST_PORT=$(sudo iptables -t nat -L PREROUTING | grep "to:$LXCIP:$CONTAINER_PORT" | grep -Po '(?<=dpt:)(\d+)')
+            if [[ -z "$HOST_PORT" ]]; then
+                # find next port number
+                HOST_PORT=$(sudo iptables -t nat -L PREROUTING | grep -Po '(?<=dpt:)(\d+)' | python3 -c "import sys; print(max([$PORTMAP_START] + list(filter(lambda x: $PORTMAP_START<=x<$PORTMAP_END, map(int, sys.stdin.read().split()))))+1)")
+
+                # map the port
+                echo "Mapping $IP:$HOST_PORT => container:$CONTAINER_PORT..."
+                sudo iptables -t nat -A PREROUTING -p tcp --dport $HOST_PORT -j DNAT --to-destination $LXCIP:$CONTAINER_PORT
+                sudo iptables -t nat -A POSTROUTING -p tcp -d $LXCIP --dport $CONTAINER_PORT -j MASQUERADE
+            else
+                echo "The port has already been mapped. $IP:$HOST_PORT => container:$CONTAINER_PORT"
+            fi
+        else
+            echo "$CONTAINER_PORT is not a valid port number"
+        fi
+    else
+        echo "========== If you'd like to forward a port from your container,"
+        echo "========== please run the following command"
+        printf "Port forward: \e[96;1mssh $USER@$IP port PORT_NUMBER\e[0m\n"
+    fi
+
+    # list current user's port map
+    echo "========== Current port forward"
+    sudo iptables -t nat -L PREROUTING | grep -Po "dpt:\d+ to:$LXCIP:\d+" | sed -e 's/dpt://' -e "s/to:$LXCIP://" | awk '{ print "'$IP':"$1" => container:"$2 }'
+}
+
 
 printf "========== Hi, \e[96;1m$USER\e[0m\n"
 echo "========== Welcome to APEX GPU Server (IP: $IP)"
@@ -223,6 +270,7 @@ elif [ "${args[0]}" == "help" ];     then print_help
 elif [ "${args[0]}" == "snapshot" ]; then do_snapshot "${args[1]}"
 elif [ "${args[0]}" == "recover" ];  then do_recover "${args[1]}" "${args[2]}"
 elif [ "${args[0]}" == "rebuild" ];  then do_rebuild
+elif [ "${args[0]}" == "port" ];     then do_port "${args[1]}"
 elif [[ -z "${args[0]}" ]];          then do_start
 else
     echo "========== Unknown command"

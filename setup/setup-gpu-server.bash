@@ -55,7 +55,7 @@ EOM
 sudo mount -a
 
 # Install essential softwares
-sudo apt-get install -y build-essential linux-headers-$(uname -r) htop tmux lxc ntp wget grep awk sed curl
+sudo apt-get install -y build-essential linux-headers-$(uname -r) htop tmux lxc ntp wget grep awk sed curl python3
 
 # Install NVIDIA Drivers
 sudo sh "$NVIDIA_DRIVER_INSTALLER" --silent
