@@ -5,7 +5,7 @@ export WEB_URL="$1"
 
 run_df() {
     df -h | curl -s -X POST --data-binary @- "$WEB_URL/feed/$SERVER_NAME/df" > /dev/null 2>&1
-    sleep 60
+    sleep 5
 }
 
 run_free() {

@@ -1,17 +1,8 @@
 #!/usr/bin/bash
 set -xe
-# export APT_SOURCE='ftp.sjtu.edu.cn'
-# export SCRIPTS='/newNAS/Share/GPU_Server'
-# export NVIDIA_DRIVER_INSTALLER="$SCRIPTS/NVIDIA-Linux-x86_64-390.48.run"
-# export REGISTER_BASH="$SCRIPTS/register.bash"
-# export LOGIN_BASH="$SCRIPTS/login.bash"
-# export LXC_CONFIG_TEMPLATE="$SCRIPTS/lxc-config.template"
-# export TEMPLATE_TAR_GZ="$SCRIPTS/template.tar.gz"
-# export NEW_LXC_BASH="$SCRIPTS/new-lxc.bash"
-# export DEL_USER_BASH="$SCRIPTS/del-user.bash"
-# export IAM_ID_RSA_PUB="$SCRIPTS/iam_id_rsa.pub"
-# export IAM_SHELL_BASH="$SCRIPTS/iam-shell.bash"
-# export SET_AUTHORIZED_KEYS_PY="$SCRIPTS/set_authorized_keys.py"
+
+# Load variables
+source env.sh
 
 # Allow `sudo` without password. Interactively, `sudo visudo`.
 sudo chmod +w /etc/sudoers
@@ -65,12 +56,6 @@ nvidia-smi
 
 # Fix `nvidia-uvm`
 sudo wget -O /root/start-nvidia.bash https://raw.githubusercontent.com/abcdabcd987/lxc-gpu/master/scripts/start-nvidia.bash
-cat <<EOM | sudo tee /etc/rc.local
-#!/bin/sh -e
-/root/start-nvidia.bash
-exit 0
-EOM
-sudo chmod +x /etc/rc.local
 sudo chmod +x /root/start-nvidia.bash
 sudo /root/start-nvidia.bash
 
@@ -78,16 +63,26 @@ sudo /root/start-nvidia.bash
 ls /dev/nvidia*
 
 # Copy lxc-gpu related files
-sudo mkdir /public
+sudo mkdir -p /public
 sudo cp "$LOGIN_BASH" /public/login.bash
 sudo cp "$REGISTER_BASH" /public/register.bash
 sudo chmod +x /public/login.bash /public/register.bash
 sudo cp "$NEW_LXC_BASH" /root/new-lxc.bash
 sudo cp "$DEL_USER_BASH" /root/del-user.bash
-sudo chmod +x /root/new-lxc.bash /root/del-user.bash
-sudo mkdir /root/lxc-public-images
+sudo cp "$MONITOR_BASH" /root/monitor.bash
+sudo chmod +x /root/new-lxc.bash /root/del-user.bash /root/monitor.bash
+sudo mkdir -p /root/lxc-public-images
 sudo cp "$TEMPLATE_TAR_GZ" /root/lxc-public-images/template.tar.gz
 sudo cp "$LXC_CONFIG_TEMPLATE" /root/lxc-public-images/lxc-config.template
+
+# Update rc.local
+cat <<EOM | sudo tee /etc/rc.local
+#!/bin/sh -e
+/root/start-nvidia.bash
+nohup /root/monitor.bash > /dev/null 2>&1 &
+exit 0
+EOM
+sudo chmod +x /etc/rc.local
 
 # Create `register` user
 sudo useradd -m -Gsudo -s /public/register.bash register
@@ -107,5 +102,8 @@ sudo cp "$IAM_SHELL_BASH" /home/iam/iam-shell.bash
 sudo cp "$SET_AUTHORIZED_KEYS_PY" /home/iam/set_authorized_keys.py
 sudo chmod +x /home/iam/iam-shell.bash /home/iam/set_authorized_keys.py
 sudo chown -R iam:iam /home/iam
+
+# Update motd
+sudo chmod -x /etc/update-motd.d/*
 
 printf "\e[96;1mDone!\e[0m\n"

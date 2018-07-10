@@ -1,0 +1,13 @@
+export APT_SOURCE='ftp.sjtu.edu.cn'
+export SCRIPTS='/newNAS/Share/GPU_Server'
+export NVIDIA_DRIVER_INSTALLER="$SCRIPTS/NVIDIA-Linux-x86_64-390.48.run"
+export REGISTER_BASH="$SCRIPTS/register.bash"
+export LOGIN_BASH="$SCRIPTS/login.bash"
+export LXC_CONFIG_TEMPLATE="$SCRIPTS/lxc-config.template"
+export TEMPLATE_TAR_GZ="$SCRIPTS/template.tar.gz"
+export NEW_LXC_BASH="$SCRIPTS/new-lxc.bash"
+export DEL_USER_BASH="$SCRIPTS/del-user.bash"
+export MONITOR_BASH="$SCRIPTS/monitor.bash"
+export IAM_ID_RSA_PUB="$SCRIPTS/iam_id_rsa.pub"
+export IAM_SHELL_BASH="$SCRIPTS/iam-shell.bash"
+export SET_AUTHORIZED_KEYS_PY="$SCRIPTS/set_authorized_keys.py"

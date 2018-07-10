@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 set -xe
-# export APT_SOURCE='ftp.sjtu.edu.cn'
-# export NVIDIA_DRIVER_INSTALLER='./NVIDIA-Linux-x86_64-390.48.run'
 
+# Load variables
+source env.sh
 
 # Allow current user to create unprivileged containers
 # See https://linuxcontainers.org/lxc/getting-started/
@@ -17,6 +17,8 @@ lxc.id_map = g 0 $SUBGID
 EOM
 
 # Download the lxc template
+# If the mirror does not work or you just do not need a mirror,
+# simply remove the --server line
 lxc-create -t download -n template -- \
     --server mirrors.tuna.tsinghua.edu.cn/lxc-images \
     --dist ubuntu --release xenial --arch amd64
@@ -59,7 +61,7 @@ lxc-attach -n template -- apt-get update
 lxc-attach -n template -- apt-get install -y openssh-server tmux htop
 
 # Install NVIDIA Drivers
-lxc-attach -n template -- sh /nvidia-driver-installer.run --no-kernel-module  --silent
+lxc-attach -n template -- sh /nvidia-driver-installer.run --no-kernel-module --silent
 
 # Check `nvidia-smi`
 lxc-attach -n template -- nvidia-smi
