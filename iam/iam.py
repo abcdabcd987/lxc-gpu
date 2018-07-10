@@ -50,6 +50,13 @@ def thread_copy_ssh_key():
         keys = {row['username']: row['keys'] for row in cur.fetchall()}
         users = list(keys.keys()) if initiator is None else [initiator]
 
+        for username in keys:
+            name = ldap_get_display_name(username)
+            cur.execute('UPDATE users SET name=? WHERE username=?', (name, username))
+
+        conn.commit()
+        cur.close()
+
         msg = dict(user_keys=keys, users=users)
         text = json.dumps(msg, indent=2)
         tasks = [(s, text) for s in settings.SERVERS.values()]
@@ -104,7 +111,7 @@ def ldap_get_display_name(username):
         cn, d = res[0]
         names = d.get('displayName', [])
         name = names[0] if names else ''
-    return name
+    return str(name, 'utf-8')
 
 def ldap_username_check(username):
     ldap_url = 'ldap://{}/{}'.format(settings.LDAP_HOST, settings.LDAP_DOMAIN)
