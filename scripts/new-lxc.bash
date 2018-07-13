@@ -36,7 +36,6 @@ echo "$USERNAME:$IAM_SUBUID:65536" >> /etc/subuid
 echo "$USERNAME:$IAM_SUBUID:65536" >> /etc/subgid
 mkdir /home/$USERNAME/.ssh
 touch /home/$USERNAME/.ssh/authorized_keys
-touch /home/$USERNAME/.ssh/config
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
 chmod 700 /home/$USERNAME/.ssh
 chmod 600 /home/$USERNAME/.ssh/authorized_keys

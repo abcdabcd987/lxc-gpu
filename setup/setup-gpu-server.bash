@@ -65,8 +65,7 @@ ls /dev/nvidia*
 # Copy lxc-gpu related files
 sudo mkdir -p /public
 sudo cp "$LOGIN_BASH" /public/login.bash
-sudo cp "$REGISTER_BASH" /public/register.bash
-sudo chmod +x /public/login.bash /public/register.bash
+sudo chmod +x /public/login.bash
 sudo cp "$NEW_LXC_BASH" /root/new-lxc.bash
 sudo cp "$DEL_USER_BASH" /root/del-user.bash
 sudo cp "$MONITOR_BASH" /root/monitor.bash
@@ -85,12 +84,15 @@ EOM
 sudo chmod +x /etc/rc.local
 
 # Create `register` user
-sudo useradd -m -Gsudo -s /public/register.bash register
+sudo useradd -m -Gsudo -s /home/register/register.bash register
 sudo mkdir -p /home/register/.ssh
 sudo touch /home/register/.ssh/authorized_keys
 sudo chown -R register:register /home/register/.ssh
 sudo chmod 700 /home/register/.ssh
 sudo chmod 600 /home/register/.ssh/authorized_keys
+sudo cp "$REGISTER_BASH" /home/register/register.bash
+sudo chmod +x /home/register/register.bash
+sudo chown -R register:register /home/register
 
 # Create `iam` user
 sudo useradd -m -Gsudo -s /home/iam/iam-shell.bash iam
