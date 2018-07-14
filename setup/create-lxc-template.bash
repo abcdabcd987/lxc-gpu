@@ -74,5 +74,5 @@ sudo rm ~/.local/share/lxc/template/rootfs/nvidia-driver-installer.run
 lxc-stop -n template
 
 # Save the rootfs
-sudo tar --numeric-owner -C ~/.local/share/lxc/template/ -czpf template.tar.gz rootfs
-printf "\e[96;1mThe template has been saved to template.tar.gz\e[0m\n"
+sudo tar --numeric-owner -C ~/.local/share/lxc/template/ -czpf "$TEMPLATE_TAR_GZ" rootfs
+printf "\e[96;1mThe template has been saved to $TEMPLATE_TAR_GZ\e[0m\n"
