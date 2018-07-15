@@ -6,7 +6,7 @@ Enjoy computation resources sharing at your laboratory with `lxc-gpu`!
 
 **This section is for users, and the rest of this document is for sysadmins.** I'd recommend sysadmins to write a guide for your laboratory. If there is not, this section gives you a basic grasp of `lxc-gpu`.
 
-`lxc-gpu` is designed to be password-less. When you login to servers, you use your SSH keys. Use `ssh-keygen` to generate one if you don't have yet. Put your SSH public key at the IAM (consult your sysadmin for the URL), enter the password for your laboratory domain account (consult your sysadmin), and click save. You can save the `.ssh/config` from the IAM so that you don't need to type each server's IP and port.
+`lxc-gpu` is designed to be password-less. When you login to servers, you use your SSH keys. Use `ssh-keygen` to generate one if you don't have yet. Put your SSH public key at the IAM (Ask your sysadmin for the URL), enter the password for your laboratory domain account (Ask your sysadmin), and click save. You can save the `.ssh/config` from the IAM so that you don't need to type each server's IP and port.
 
 * The first time you login to a server, you need to register on the server. Run `ssh register@SERVERNAME-manage USERNAME`.
 * To boot your container, run `ssh SERVERNAME-manage`.
@@ -18,7 +18,11 @@ Enjoy computation resources sharing at your laboratory with `lxc-gpu`!
     * `ssh SERVERNAME-manage rebuild`: Recover from the template
     * `ssh SERVERNAME-manage stop`: Shutdown the container
 
-Once you've logged in to your container, you can operate it just like a bare metal while sharing computation and storage resources with other users. Especially, you have the `root` privilege and access to GPUs. Enjoy researching!
+Once you've logged in to your container, you can operate it just like a bare metal while sharing computation and storage resources with other users. Especially, you have the `root` privilege and the access to GPUs.
+
+There is also a webpage that refreshes every few seconds to show you the load of each server. Ask your sysadmin for the URL.
+
+Enjoy researching!
 
 ### How to use the IAM
 
@@ -27,6 +31,10 @@ Once you've logged in to your container, you can operate it just like a bare met
 ### How to login to the container
 
 [![Asciinema: How to login the container](https://asciinema.org/a/191738.png)](https://asciinema.org/a/191738)
+
+### Server Load Monitor
+
+[![Server Load Monitor](https://i.imgur.com/J1aQ1cj.png)](https://i.imgur.com/J1aQ1cj.png)
 
 ------------------------------
 
