@@ -1,6 +1,36 @@
 # lxc-gpu
 
-Fearless computation resources sharing at your laboratory with `lxc-gpu`!
+Enjoy computation resources sharing at your laboratory with `lxc-gpu`!
+
+## How to use (for users)
+
+**This section is for users, and the rest of this document is for sysadmins.** I'd recommend sysadmins to write a guide for your laboratory. If there is not, this section gives you a basic grasp of `lxc-gpu`.
+
+`lxc-gpu` is designed to be password-less. When you login to servers, you use your SSH keys. Use `ssh-keygen` to generate one if you don't have yet. Put your SSH public key at the IAM (consult your sysadmin for the URL), enter the password for your laboratory domain account (consult your sysadmin), and click save. You can save the `.ssh/config` from the IAM so that you don't need to type each server's IP and port.
+
+* The first time you login to a server, you need to register on the server. Run `ssh register@SERVERNAME-manage USERNAME`.
+* To boot your container, run `ssh SERVERNAME-manage`.
+* To login to your container, run `ssh SERVERNAME`.
+* There are some other functions, see `ssh SERVERNAME-manage` for more detail, including
+    * `ssh SERVERNAME-manage port`: Port forwarding
+    * `ssh SERVERNAME-manage snapshot`: Take a snapshot
+    * `ssh SERVERNAME-manage recover`: Recover from a snapshot
+    * `ssh SERVERNAME-manage rebuild`: Recover from the template
+    * `ssh SERVERNAME-manage stop`: Shutdown the container
+
+Once you've logged in to your container, you can operate it just like a bare metal while sharing computation and storage resources with other users. Especially, you have the `root` privilege and access to GPUs. Enjoy researching!
+
+### How to use the IAM
+
+[![YouTube: How to use the IAM](https://img.youtube.com/vi/Z-E7VeY4Q9s/0.jpg)](https://www.youtube.com/watch?v=Z-E7VeY4Q9s)
+
+### How to login to the container
+
+[![Asciinema: How to login the container](https://asciinema.org/a/191738.png)](https://asciinema.org/a/191738)
+
+------------------------------
+
+**The rest of this document is for sysadmins.**
 
 ## Motivation
 
@@ -32,7 +62,7 @@ The project contains the following parts:
 
 Before installing `lxc-gpu`, make sure your laboratory has a [LDAP](https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol)-compatible directory service, such as [*OpenLDAP*](https://www.openldap.org/) and [*Active Directory*](https://en.wikipedia.org/wiki/Active_Directory), as **`lxc-gpu` authenticates users through the LDAP service**.
 
-We also recommend your laboratory to have a [NAS](https://en.wikipedia.org/wiki/Network-attached_storage) server, such as [*FreeNAS*](http://www.freenas.org/). `lxc-gpu` does not have to rely on NAS, but without NAS, the installation could be more complicated (you need to copy scripts and NVIDIA driver to all machines) and some features could be less user-friendly (users need to ask the sysadmin to copy their snapshots of the container to the target machine).
+I also recommend your laboratory to have a [NAS](https://en.wikipedia.org/wiki/Network-attached_storage) server, such as [*FreeNAS*](http://www.freenas.org/). `lxc-gpu` does not have to rely on NAS, but without NAS, the installation could be more complicated (you need to copy scripts and NVIDIA driver to all machines) and some features could be less user-friendly (users need to ask the sysadmin to copy their snapshots of the container to the target machine).
 
 Our laboratory has the following infrastructures, for you reference:
 
@@ -40,27 +70,21 @@ Our laboratory has the following infrastructures, for you reference:
 * FreeNAS
 * Active Directory
 
-Installation scripts locate at `setup/` directory. Although these scripts should be able to run successfully given correct configuration, **we recommend that you read them carefully, adapt them to fit the infrastructure of your laboratory, and finally execute them line by line instead of running in batch.** The scripts are designed for Ubuntu only. If you use other Linux distribution, especially non-deb package manager, you would need lots of modification to the scripts.
+Installation scripts locate at `setup/` directory. Although these scripts should be able to run successfully given correct configuration, **I recommend that you read them carefully, adapt them to fit the infrastructure of your laboratory, and finally execute them line by line instead of running in batch.** The scripts are designed for Ubuntu only. If you use other Linux distribution, especially non-deb package manager, you would need lots of modification to the scripts.
 
 To install `lxc-gpu`:
 
 1. Rename `env.example.sh` to `env.sh`
 2. Edit environment variables in `env.sh`
-3. Copy related files to the corresponding path as specified in `env.sh`
-4. Create the template LXC container by running `create-lxc-template.bash` **on an arbitrary machine**
-5. Read `setup-gpu-server.bash` carefully, adapt it to fit the infrastructure of your laboratory, and finally execute it line by line instead of running in batch **on each computation server**
-6. Install `iam/` and `monitor/` **on a web server**
+3. Edit scripts in `scripts/` directory to fit the infrastructure of your laboratory
+4. Copy related files to the corresponding path as specified in `env.sh`
+5. Create the template LXC container by running `create-lxc-template.bash` **on an arbitrary machine**
+6. Read `setup-gpu-server.bash` carefully, adapt it to fit the infrastructure of your laboratory, and finally execute it line by line instead of running in batch **on each computation server**
+7. Install `iam/` and `monitor/` **on a web server**
     * Rename `settings.example.py` to `settings.py` and change the settings
     * `pip3 install -r requirements.txt`
     * Both *IAM* and *monitor* are [Flask](http://flask.pocoo.org/docs/1.0/) applications in Python 3. Refer to [Flask Deployment Options](http://flask.pocoo.org/docs/1.0/deploying/) for more detail.
-
-## How to use the IAM
-
-[![YouTube: How to use the IAM](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE)
-
-## How to login the container
-
-[![Asciinema: How to login the container](https://asciinema.org/a/191738.png)](https://asciinema.org/a/191738)
+8. **Write a guide for users.** For your reference, [here is the guide at the APEX Lab (Chinese only)](guide_apex_lab_chinese.md)
 
 ## How it works
 
