@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import threading
-import ldap
+import ldap, ldap.filter
 import os
 import sqlite3
 import threading
@@ -105,7 +105,7 @@ def ldap_get_display_name(username):
     l = ldap.initialize(ldap_url)
     l.simple_bind_s(settings.LDAP_IAM_USER, settings.LDAP_IAM_PASS)
     base = ','.join(['cn=users'] + settings.LDAP_BASE)
-    res = l.search_s(base, ldap.SCOPE_SUBTREE, 'sAMAccountName=' + username, ['displayName'])
+    res = l.search_s(base, ldap.SCOPE_SUBTREE, 'sAMAccountName=' + ldap.filter.escape_filter_chars(username), ['displayName'])
     name = ''
     if res:
         cn, d = res[0]
@@ -118,7 +118,7 @@ def ldap_username_check(username):
     l = ldap.initialize(ldap_url)
     l.simple_bind_s(settings.LDAP_IAM_USER, settings.LDAP_IAM_PASS)
     base = ','.join(['cn=users'] + settings.LDAP_BASE)
-    u = l.search_s(base, ldap.SCOPE_SUBTREE, 'sAMAccountName=' + username, ['sAMAccountName'])
+    u = l.search_s(base, ldap.SCOPE_SUBTREE, 'sAMAccountName=' + ldap.filter.escape_filter_chars(username), ['sAMAccountName'])
     return len(u) > 0
 
 def ldap_login_check(username, password):
